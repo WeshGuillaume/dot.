@@ -1,6 +1,6 @@
 {
-  "name": "parser",
-  "version": "1.0.0",
+  "name": "dot.",
+  "version": "1.0.0-alpha",
   "main": "index.js",
   "license": "MIT"
 }
