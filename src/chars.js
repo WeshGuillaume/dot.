@@ -99,10 +99,16 @@ function noneOf (chs) {
 
 const alphaNum = oneOf(digit, letter)
 
+const space = oneOf(char(' '), char('\t'), char('\n'))
+
+const number = state => parseInt(many1(digit)(state).join(''))
+
 module.exports = {
+  space,
   char,
   letter,
   digit,
+  number,
   alphaNum,
   operator,
   noneOf,

@@ -179,7 +179,13 @@ function skipMany (p) {
   return skip(many(p))
 }
 
+const lexeme = p => state => {
+  const ret = sequence(skip(maybe(many(space))), p, skip(maybe(many(space))))(state)
+  return ret[0]
+}
+
 module.exports = {
+  lexeme,
   maybe,
   endBy1,
   endBy,
