@@ -1,116 +1,5 @@
 
-const NO_MATCH = Symbol('NO_MATCH')
-
-class ParseError extends Error {
-  constructor (message, state) {
-    super(`[ParseError]: ${message}: position: ${state('line')}:${state('column')}`)
-  }
-}
-
-/**
- * State management
- *
- * a State contains the following:
- *  - the current column parsed
- *  - the current source line
- *  - the input left to parse
- *
- * The store is the actual object containing the values
- * The relevant store is the last one
- *
- * Lookahead is implemented by providing two utilities to the state
- *  function: save and reset. It will create a copy of the current store
- *  and remove that copy if an error occured and the input was consumed
- *
- * Usage:
- *
- * const state = createState('1+2')
- * const input = state('input') // 1+2
- * state.save()
- * state('input', input.slice(1))
- * state() // { input: '+2' }
- * state.reset()
- * state() // { input: '1+2' }
- *
- * TODO: - provide a state.apply function in case of success
- *       - change the accessing methods 
- */
-function createState (input) {
-
-  const defaultStore = {
-    column: 0,
-    line: 1,
-    input,
-  }
-
-  const stores = [defaultStore]
-  const getter = () => stores.slice(-1)[0]
-
-  const manager = (key, value) => {
-    if (!key) { return getter() }
-    if (value === undefined) { return getter()[key] }
-    return (stores[stores.length - 1][key] = value)
-  }
-
-  manager.save = () => stores.push(Object.assign({}, getter()))
-  manager.reset = () => stores.length > 1 ? stores.pop() : false
-
-  return manager
-}
-
-/**
- * Characters
- * ----------------------------------------------------------------------------
- */
-
-/**
- * char
- *
- * parse a single character in the source
- *
- * in case of success:
- *  - adjust the input line and column
- *  - slice the input
- * in case of error:
- *  - throw a ParseError
- */
-function char (c) {
-  return state => {
-    const input = state('input')
-    const ch = input.charAt(0)
-    if (ch !== c) { throw new ParseError(`Unexpected '${ch}', expected '${c}'`, state) }
-    if (ch === '\n') {
-      state('line', state('line') + 1)
-      state('column', 0)
-    } else {
-      state('column', state('column') + 1)
-    }
-    state('input', input.slice(1))
-    return ch
-  }
-}
-
-// TODO optimize by not using char
-const alphaNum = oneOf(
-  ...'qwertyuiopasdfghjklzxcvbnm1234567890'.split('').map(char)
-)
-
-
-/**
- * Strings
- * ----------------------------------------------------------------------------
- */
-
-/**
- * symbol
- *
- * parse a string using a sequence of char parsers
- */
-function symbol (str) {
-  return state => {
-    return sequence(...str.split('').map(char))(state).join('')
-  }
-}
+const { NO_MATCH, ParseError } = require('./errors')
 
 /**
  * Combinators
@@ -278,3 +167,29 @@ const endBy = endByF(many)
  * parse one or more occurence of a parser ended by another parser
  */
 const endBy1 = endByF(many1)
+
+function skip (p) {
+  return state => {
+    const ret = p(state)
+    return NO_MATCH
+  }
+}
+
+function skipMany (p) {
+  return skip(many(p))
+}
+
+module.exports = {
+  maybe,
+  endBy1,
+  endBy,
+  many1,
+  many,
+  sepBy,
+  sepBy1,
+  between,
+  sequence,
+  oneOf,
+  skip,
+  skipMany,
+}
