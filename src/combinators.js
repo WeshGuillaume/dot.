@@ -1,5 +1,6 @@
 
-const { NO_MATCH, ParseError } = require('./errors')
+import { NO_MATCH, ParseError } from './errors'
+import { number, space, noneOf, digit, char, letter } from './chars'
 
 /**
  * Combinators
@@ -19,6 +20,7 @@ function maybe (p) {
       const ret = p(state)
       return ret
     } catch (e) {
+      console.log(e)
       state.reset()
       return NO_MATCH
     }
@@ -45,7 +47,7 @@ function sequence (...ps) {
 function oneOf (...ps) {
   return state => {
     const list = ps.map(maybe)
-    for (p of list) {
+    for (const p of list) {
       const ret = p(state)
       if (ret !== NO_MATCH) { return ret }
     }
@@ -66,6 +68,7 @@ function many (p) {
       try {
         acc.push(p(state))
       } catch (e) {
+        console.log(e)
         return acc
       }
     }
@@ -103,6 +106,7 @@ function between (p1, p2) {
       _ = p2(state)
       return ret
     } catch (e) {
+      console.log(e)
       state.reset()
       throw e
     }
@@ -148,6 +152,7 @@ function endByF (manyF) {
       const _ = end(state)
       return ret
     } catch (e) {
+      console.log(e)
       state.reset()
       throw e
     }
@@ -170,7 +175,9 @@ const endBy1 = endByF(many1)
 
 function skip (p) {
   return state => {
-    const ret = p(state)
+    try {
+      const ret = p(state)
+    } catch (e) { console.log(e) }
     return NO_MATCH
   }
 }
@@ -180,11 +187,16 @@ function skipMany (p) {
 }
 
 const lexeme = p => state => {
-  const ret = sequence(skip(maybe(many(space))), p, skip(maybe(many(space))))(state)
-  return ret[0]
+  const ret = sequence(
+    skipMany(space),
+    p,
+    skipMany(space)
+  )(state)
+  return p(state)
+  // return ret[0]
 }
 
-module.exports = {
+export {
   lexeme,
   maybe,
   endBy1,

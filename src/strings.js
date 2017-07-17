@@ -1,6 +1,6 @@
 
-const { sequence } = require('./combinators')
-const { char } = require('./chars')
+import { sequence } from './combinators'
+import * as chars from './chars'
 
 /**
  * Strings
@@ -14,8 +14,25 @@ const { char } = require('./chars')
  */
 function symbol (str) {
   return state => {
-    return sequence(...str.split('').map(char))(state).join('')
+    return sequence(...str.split('').map(chars.char))(state).join('')
   }
 }
 
-module.exports = { symbol }
+function noneOf (str) {
+  return state => {
+    const acc = []
+    while (true) {
+      try {
+        const ret = chars.noneOf(str)
+        acc.push(ret)
+      } catch (e) {
+        return acc.join('')
+      }
+    }
+  }
+}
+
+export {
+  symbol,
+  noneOf,
+}

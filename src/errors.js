@@ -7,7 +7,7 @@ class ParseError extends Error {
   }
 }
 
-module.exports = {
+export {
   NO_MATCH,
   ParseError,
 }

@@ -1,12 +1,12 @@
 
-const { char } = require('./chars')
-const { symbol } = require('./strings')
+import { char, noneOf } from './chars'
+import { symbol } from './strings'
 
 const {
   sequence,
   skip,
+  oneOf,
   endBy,
-  noneOf
 } = require('./combinators')
 
 const openBrace = char('{')
@@ -14,8 +14,15 @@ const closeBrace = char('}')
 const openBracket = char('[')
 const closeBracket = char(']')
 const comma = char(',')
+const semi = char(';')
 
-const createBoolean = (t, f) => oneOf(symbol(t), symbol(f))
-
+// TODO: in strings module
 const string = state =>
   sequence(skip(char('"')), endBy(char('"'))(noneOf('"')))(state)[0].join('')
+
+export {
+  openBracket, closeBracket,
+  openBrace, closeBrace,
+  comma, semi,
+  string,
+}

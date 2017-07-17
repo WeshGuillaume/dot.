@@ -50,4 +50,4 @@ function createState (input) {
   return manager
 }
 
-module.exports = { createState }
+export { createState }

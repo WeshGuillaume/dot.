@@ -1,36 +1,7 @@
 
-const { ParseError } = require('./errors')
-const { oneOf } = require('./combinators')
-
-/**
- * Chars utils
- * ----------------------------------------------------------------------------
- */
-
-function consume (state) {
-  let input = state('input')
-  let column = state('column')
-  let line = state('line')
-
-  if (input.charAt(0) === '\n') {
-    column = 0
-    line++
-  } else {
-    column++
-  }
-
-  input = input.slice(1)
-
-  state('input', input)
-  state('column', column)
-  state('line', line)
-}
-
-function getFisrtChar (state) {
-  const input = state('input')
-  if (!input.length) { throw new ParseError('Unexpected end of input', state) }
-  return input.charAt(0)
-}
+import { ParseError } from './errors'
+import { oneOf } from './combinators'
+import { getFisrtChar, consume } from './utils'
 
 /**
  * Characters
@@ -103,7 +74,7 @@ const space = oneOf(char(' '), char('\t'), char('\n'))
 
 const number = state => parseInt(many1(digit)(state).join(''))
 
-module.exports = {
+export {
   space,
   char,
   letter,
