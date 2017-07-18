@@ -16,9 +16,12 @@ const closeBracket = char(']')
 const comma = char(',')
 const semi = char(';')
 
-// TODO: in strings module
-const string = state =>
-  sequence(skip(char('"')), endBy(char('"'))(noneOf('"')))(state)[0].join('')
+const string = state => {
+  return sequence(
+    skip(char('"')),
+    endBy(char('"'))(noneOf('"'))
+  )(state)[0].join('')
+}
 
 export {
   openBracket, closeBracket,

@@ -14,7 +14,8 @@ import * as chars from './chars'
  */
 function symbol (str) {
   return state => {
-    return sequence(...str.split('').map(chars.char))(state).join('')
+    const ret = sequence(...str.split('').map(chars.char))(state).join('')
+    return ret
   }
 }
 

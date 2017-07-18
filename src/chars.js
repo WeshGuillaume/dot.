@@ -1,7 +1,8 @@
 
 import { ParseError } from './errors'
-import { oneOf } from './combinators'
+import { oneOf, many1 } from './combinators'
 import { getFisrtChar, consume } from './utils'
+import { number } from './numbers'
 
 /**
  * Characters
@@ -71,8 +72,6 @@ function noneOf (chs) {
 const alphaNum = oneOf(digit, letter)
 
 const space = oneOf(char(' '), char('\t'), char('\n'))
-
-const number = state => parseInt(many1(digit)(state).join(''))
 
 export {
   space,

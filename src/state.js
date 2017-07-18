@@ -46,6 +46,7 @@ function createState (input) {
 
   manager.save = () => stores.push(Object.assign({}, getter()))
   manager.reset = () => stores.length > 1 ? stores.pop() : false
+  manager.apply = () => stores.length > 1 ? stores.shift() : false
 
   return manager
 }

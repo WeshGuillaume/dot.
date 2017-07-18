@@ -22,7 +22,12 @@ function float (state) {
   return parseFloat(ret.join(''))
 }
 
-const number = oneOf(float, integer)
+const number = state => {
+  console.log('hello')
+  const ret = oneOf(float, integer)(state)
+  console.log('hola')
+  return ret
+}
 
 export {
   number,

@@ -1,5 +1,6 @@
 
-import { number, space, noneOf, digit, char, letter } from './chars'
+import { space, noneOf, digit, char, letter } from './chars'
+import { number } from './numbers'
 import { skipMany, many, lexeme, maybe, between, oneOf, many1, sequence, endBy, skip, sepBy } from './combinators'
 import { symbol } from './strings'
 import { createState } from './state'
@@ -20,11 +21,13 @@ const key = string
 const boolean = oneOf(symbol('true'), symbol('false'))
 
 function value (state) {
-  return oneOf(boolean, string, array, object, number)(state)
+  return lexeme(oneOf(boolean, string, array, object, number))(state)
 }
 
 function array (state) {
-  return between(openBracket, closeBracket)(sepBy(comma)(value))(state)
+  const delimiter = between(openBracket, closeBracket)
+  const values = sepBy(comma)(value)
+  return delimiter(values)(state)
 }
 
 function pair (state) {
@@ -44,7 +47,8 @@ function object (state) {
   )(propsList)(state)
 }
 
-const state = createState(`true`)
-const parser = lexeme(boolean)
+const state = createState(`{1 2 3  23.213   "hello"  1 0 "fewf"}`)
+const parser = between(openBrace, closeBrace)(many(lexeme(oneOf(number, string))))
 const ret = parser(state)
-console.log(ret, state())
+console.log(ret)
+console.log(state())

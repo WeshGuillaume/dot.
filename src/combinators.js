@@ -18,9 +18,23 @@ function maybe (p) {
     state.save()
     try {
       const ret = p(state)
+      state.apply()
       return ret
     } catch (e) {
-      console.log(e)
+      state.reset()
+      return NO_MATCH
+    }
+  }
+}
+
+function lookAhead (p) {
+  return state => {
+    state.save()
+    try {
+      const ret = p(state)
+      state.apply()
+      return ret
+    } catch (e) {
       state.reset()
       return NO_MATCH
     }
@@ -48,8 +62,14 @@ function oneOf (...ps) {
   return state => {
     const list = ps.map(maybe)
     for (const p of list) {
-      const ret = p(state)
-      if (ret !== NO_MATCH) { return ret }
+      try {
+        state.save()
+        const ret = p(state)
+        if (ret !== NO_MATCH) {
+          state.apply()
+          return ret
+        }
+      } catch (e) { state.reset() }
     }
     const input = state('input')
     throw new ParseError(`Unexpected ${input.charAt(0)}`, state)
@@ -68,7 +88,6 @@ function many (p) {
       try {
         acc.push(p(state))
       } catch (e) {
-        console.log(e)
         return acc
       }
     }
@@ -104,9 +123,9 @@ function between (p1, p2) {
       _ = p1(state)
       const ret = p(state)
       _ = p2(state)
+      state.apply()
       return ret
     } catch (e) {
-      console.log(e)
       state.reset()
       throw e
     }
@@ -150,9 +169,9 @@ function endByF (manyF) {
     try {
       const ret = manyF(p)(state)
       const _ = end(state)
+      state.apply()
       return ret
     } catch (e) {
-      console.log(e)
       state.reset()
       throw e
     }
@@ -175,15 +194,27 @@ const endBy1 = endByF(many1)
 
 function skip (p) {
   return state => {
+    const ret = lookAhead(p)(state)
+    return NO_MATCH
+  }
+}
+
+function skip (p) {
+  return state => {
     try {
       const ret = p(state)
-    } catch (e) { console.log(e) }
+    } catch (e) {}
     return NO_MATCH
   }
 }
 
 function skipMany (p) {
-  return skip(many(p))
+  return state => {
+    try {
+      skip(many(p))(state)
+    } catch (e) {}
+    return NO_MATCH
+  }
 }
 
 const lexeme = p => state => {
@@ -192,8 +223,7 @@ const lexeme = p => state => {
     p,
     skipMany(space)
   )(state)
-  return p(state)
-  // return ret[0]
+  return ret[0]
 }
 
 export {
