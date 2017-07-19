@@ -30,14 +30,12 @@ function createState (state) {
       if (error.type !== 'ParseError') {
         throw error
       } else {
-        state.error = error
-        return createState(Object.assign({}, { return: null }))
+        return createState(Object.assign({}, state, { return: null, error }))
       }
     },
 
     return: value => {
-      state.return = value
-      return createState(Object.assign({}, state, { error: null }))
+      return createState(Object.assign({}, state, { error: null, return: value }))
     },
 
     consumeChar: () => state.input = state.input.slice(1),
@@ -49,7 +47,7 @@ function createState (state) {
     ignoreError: () => (state.error = null),
 
     setState: update => {
-      const s = Object.assign({}, state, update, { error: null, return: null })
+      const s = Object.assign({}, state, update, { error: null })
       return createState(s)
     },
 

@@ -1,6 +1,6 @@
 
-import { sequence } from './combinators'
-import * as chars from './chars'
+import { sequence, skipMany } from './combinators'
+import { char, space } from './chars'
 
 /**
  * Strings
@@ -14,38 +14,30 @@ import * as chars from './chars'
  */
 function symbol (str) {
   return state => {
-    const ret = sequence(...str.split('').map(chars.char))(state).join('')
-    return ret
-  }
-}
-
-function noneOf (str) {
-  return state => {
-    const acc = []
-    while (true) {
-      try {
-        const ret = chars.noneOf(str)
-        acc.push(ret)
-      } catch (e) {
-        return acc.join('')
-      }
+    // TODO without char
+    const ret = sequence(...str.split('').map(char))(state.clone())
+    if (ret.value.error) {
+      return state.error(ret.value.error)
     }
+    return ret.return(ret.value.return.join(''))
   }
 }
 
 function lexeme (p) {
   return state => {
-    const ret = sequence(
+    const s = sequence(
       skipMany(space),
       p,
-      skipMany(space)
-    )(state)
-    return ret[0]
+      skipMany(space),
+    )(state.clone())
+    if (s.value.error) {
+      return state.error(s.value.error)
+    }
+    return s.return(s.value.return[0])
   }
 }
 
 export {
   lexeme,
   symbol,
-  noneOf,
 }

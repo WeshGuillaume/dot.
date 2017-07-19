@@ -1,5 +1,8 @@
 
 import { createState } from './state'
+
+import { symbol, lexeme } from './strings'
+
 import {
   char,
   space,
@@ -13,6 +16,9 @@ import {
 import {
   maybe,
   sequence,
+  skip,
+  skipMany,
+  many,
 } from './combinators'
 
 function testChar (parser, input, output) {
@@ -39,26 +45,31 @@ function testMaybe(ch, input, output) {
 
 function testSequence (chs, input, output) {
   const state = createState({ input })
-  const { value } = sequence(...chs.split('').map(char))(state)
-  if (value.return.join('') !== output) {
+  const ret = sequence(...chs.split('').map(char))(state)
+  if (ret.value.return.join('') !== output) {
     console.log(`
       expected: ${output}
-      got: ${value.return}
+      got: ${ret.value.return}
+      error: ${ret.value.error && ret.value.error.message}
     `)
   }
 }
 
-testChar(char('a'), 'ab', 'a')
-testChar(space, '  ', ' ')
-testChar(letter, 'r1', 'r')
-testChar(digit, '2', '2')
-testChar(alphaNum, 'e', 'e')
-testChar(alphaNum, '4', '4')
-testChar(operator, '+', '+')
-testChar(noneOf('ab'), 'c', 'c')
+// testChar(char('a'), 'ab', 'a')
+// testChar(space, '  ', ' ')
+// testChar(letter, 'r1', 'r')
+// testChar(digit, '2', '2')
+// testChar(alphaNum, 'e', 'e')
+// testChar(alphaNum, '4', '4')
+// testChar(operator, '+', '+')
+// testChar(noneOf('ab'), 'c', 'c')
 
-testMaybe('a', 'ab', 'a')
-testMaybe('a', 'eb', null)
+// testMaybe('a', 'ab', 'a')
+// testMaybe('a', 'eb', null)
 
-testSequence('abc', 'abcd', 'abc')
-testSequence('axc', 'abcd', 'axc')
+// testSequence('abc', 'abcd', 'abc')
+
+const s = createState({ input: '  abcd  e' })
+const parser = lexeme(symbol('abcd'))
+const s1 = parser(s)
+console.log(s1.value)
