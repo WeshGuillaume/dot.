@@ -33,7 +33,19 @@ function noneOf (str) {
   }
 }
 
+function lexeme (p) {
+  return state => {
+    const ret = sequence(
+      skipMany(space),
+      p,
+      skipMany(space)
+    )(state)
+    return ret[0]
+  }
+}
+
 export {
+  lexeme,
   symbol,
   noneOf,
 }

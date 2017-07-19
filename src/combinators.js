@@ -1,6 +1,5 @@
 
 import { NO_MATCH, ParseError } from './errors'
-import { number, space, noneOf, digit, char, letter } from './chars'
 
 /**
  * Combinators
@@ -15,29 +14,11 @@ import { number, space, noneOf, digit, char, letter } from './chars'
  */
 function maybe (p) {
   return state => {
-    state.save()
-    try {
-      const ret = p(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      return NO_MATCH
+    const stateTmp = p(state.clone())
+    if (state.value.error) {
+      return state.return(NO_MATCH)
     }
-  }
-}
-
-function lookAhead (p) {
-  return state => {
-    state.save()
-    try {
-      const ret = p(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      return NO_MATCH
-    }
+    return stateTmp
   }
 }
 
@@ -49,7 +30,24 @@ function lookAhead (p) {
  */
 function sequence (...ps) {
   return state => {
-    return ps.map(p => p(state)).filter(e => e !== NO_MATCH)
+    let error = null
+    const ss = ps.reduce(
+      (s, parser) => {
+        if (s === null) { return null }
+        const ret = parser(s)
+        if (ret.value.error) {
+          error = ret
+          return null
+        }
+        return state.setState({
+          return: (state.value.return || []).concat([ret.value.return])
+        })
+      },
+      state.clone()
+    )
+
+    console.log(ss.value)
+    return error || ss
   }
 }
 
@@ -217,17 +215,7 @@ function skipMany (p) {
   }
 }
 
-const lexeme = p => state => {
-  const ret = sequence(
-    skipMany(space),
-    p,
-    skipMany(space)
-  )(state)
-  return ret[0]
-}
-
 export {
-  lexeme,
   maybe,
   endBy1,
   endBy,

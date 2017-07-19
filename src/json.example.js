@@ -1,8 +1,8 @@
 
 import { space, noneOf, digit, char, letter } from './chars'
 import { number } from './numbers'
-import { skipMany, many, lexeme, maybe, between, oneOf, many1, sequence, endBy, skip, sepBy } from './combinators'
-import { symbol } from './strings'
+import { skipMany, many, maybe, between, oneOf, many1, sequence, endBy, skip, sepBy } from './combinators'
+import { symbol, lexeme } from './strings'
 import { createState } from './state'
 
 
