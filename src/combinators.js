@@ -1,6 +1,5 @@
 
-import { NO_MATCH, ParseError } from './errors'
-import { number, space, noneOf, digit, char, letter } from './chars'
+import { NO_MATCH, ParseError, raise } from './errors'
 
 /**
  * Combinators
@@ -36,6 +35,7 @@ function lookAhead (p) {
       return ret
     } catch (e) {
       state.reset()
+      raise(e)
       return NO_MATCH
     }
   }
@@ -69,10 +69,12 @@ function oneOf (...ps) {
           state.apply()
           return ret
         }
-      } catch (e) { state.reset() }
+      } catch (e) {
+        state.reset()
+      }
     }
     const input = state('input')
-    throw new ParseError(`Unexpected ${input.charAt(0)}`, state)
+    raise(new ParseError(`[oneOf]: Unexpected ${input.charAt(0)}`, state))
   }
 }
 
@@ -127,7 +129,7 @@ function between (p1, p2) {
       return ret
     } catch (e) {
       state.reset()
-      throw e
+      raise(e)
     }
   }
 }
@@ -148,7 +150,7 @@ function sepBy1 (sep) {
 /**
  * sepBy1
  *
- * return an array of one or more occurence of p separated by sep
+ * return an array of zero or more occurence of p separated by sep
  */
 function sepBy (sep) {
   return p => state => {
@@ -173,7 +175,7 @@ function endByF (manyF) {
       return ret
     } catch (e) {
       state.reset()
-      throw e
+      raise(e)
     }
   }
 }
@@ -203,7 +205,7 @@ function skip (p) {
   return state => {
     try {
       const ret = p(state)
-    } catch (e) {}
+    } catch (e) { raise(e) }
     return NO_MATCH
   }
 }
@@ -212,22 +214,12 @@ function skipMany (p) {
   return state => {
     try {
       skip(many(p))(state)
-    } catch (e) {}
+    } catch (e) { raise(e) }
     return NO_MATCH
   }
 }
 
-const lexeme = p => state => {
-  const ret = sequence(
-    skipMany(space),
-    p,
-    skipMany(space)
-  )(state)
-  return ret[0]
-}
-
 export {
-  lexeme,
   maybe,
   endBy1,
   endBy,

@@ -4,9 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "json": "babel-node src/json.example"
+    "test": "mocha --require babel-register test/ --watch",
+    "json": "babel-node index"
   },
   "dependencies": {
-    "babel-preset-es2015": "^6.24.1"
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.24.1",
+    "chai": "^4.1.0",
+    "mocha": "^3.4.2"
   }
 }

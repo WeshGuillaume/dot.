@@ -1,5 +1,6 @@
 
-import { sequence } from './combinators'
+import { raise } from './errors'
+import { sequence, many1, skipMany } from './combinators'
 import * as chars from './chars'
 
 /**
@@ -14,26 +15,32 @@ import * as chars from './chars'
  */
 function symbol (str) {
   return state => {
-    const ret = sequence(...str.split('').map(chars.char))(state).join('')
-    return ret
+    const ret = sequence(
+      ...str.split('').map(chars.char)
+    )(state)
+    return ret.join('')
   }
 }
 
 function noneOf (str) {
   return state => {
-    const acc = []
-    while (true) {
-      try {
-        const ret = chars.noneOf(str)
-        acc.push(ret)
-      } catch (e) {
-        return acc.join('')
-      }
-    }
+    return many1(chars.noneOf(str))(state).join('')
+  }
+}
+
+function lexeme (p) {
+  return state => {
+    const ret = sequence(
+      skipMany(chars.space),
+      p,
+      skipMany(chars.space)
+    )(state)
+    return ret[0]
   }
 }
 
 export {
   symbol,
   noneOf,
+  lexeme,
 }

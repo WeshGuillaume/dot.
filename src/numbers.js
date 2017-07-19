@@ -1,5 +1,5 @@
 
-import chars from './chars'
+import * as chars from './chars'
 import { many1, many, oneOf, sequence } from './combinators'
 
 function digit (state) {
@@ -23,9 +23,7 @@ function float (state) {
 }
 
 const number = state => {
-  console.log('hello')
   const ret = oneOf(float, integer)(state)
-  console.log('hola')
   return ret
 }
 

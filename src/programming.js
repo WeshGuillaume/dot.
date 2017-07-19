@@ -1,5 +1,6 @@
 
 import { char, noneOf } from './chars'
+import { many } from './combinators'
 import { symbol } from './strings'
 
 const {
@@ -17,10 +18,12 @@ const comma = char(',')
 const semi = char(';')
 
 const string = state => {
-  return sequence(
+  const ret = sequence(
     skip(char('"')),
-    endBy(char('"'))(noneOf('"'))
-  )(state)[0].join('')
+    many(noneOf('"')),
+    skip(char('"'))
+  )(state)
+  return ret[0].join('')
 }
 
 export {

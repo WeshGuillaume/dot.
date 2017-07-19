@@ -1,5 +1,5 @@
 
-import { ParseError } from './errors'
+import { ParseError, raise } from './errors'
 import { oneOf, many1 } from './combinators'
 import { getFisrtChar, consume } from './utils'
 import { number } from './numbers'
@@ -24,7 +24,7 @@ function char (c) {
   return state => {
     const ch = getFisrtChar(state)
     if (ch !== c) {
-      throw new ParseError(`Unexpected '${ch}', expected '${c}'`, state)
+      raise(new ParseError(`Unexpected '${ch}', expected '${c}'`, state), true)
     }
     consume(state)
     return ch
@@ -34,7 +34,7 @@ function char (c) {
 function digit (state) {
   const ch = getFisrtChar(state)
   if (!ch.match(/\d/)) {
-    throw new ParseError(`Unexpected '${ch}', expected a digit`, state)
+    raise(new ParseError(`Unexpected '${ch}', expected a digit`, state), true)
   }
   consume(state)
   return ch
@@ -43,7 +43,7 @@ function digit (state) {
 function operator (state) {
   const ch = getFisrtChar(state)
   if (['+', '-', '/', '.', '%'].includes(ch)) {
-    throw new ParseError(`Unexpected '${ch}', expected an operator`, state)
+    raise(new ParseError(`Unexpected '${ch}', expected an operator`, state), true)
   }
   consume(state)
   return ch
@@ -52,7 +52,7 @@ function operator (state) {
 function letter (state) {
   const ch = getFisrtChar(state)
   if (!ch.match(/[a-zA-Z]/)) {
-    throw new ParseError(`Unexpected '${ch}', expected a letter`, state)
+    raise(new ParseError(`Unexpected '${ch}', expected a letter`, state), true)
   }
   consume(state)
   return ch
@@ -61,8 +61,8 @@ function letter (state) {
 function noneOf (chs) {
   return state => {
     const ch = getFisrtChar(state)
-    if (chs.includes(ch)) {
-      throw new ParseError(`Unexpected '${ch}'`, state)
+    if (chs.split('').includes(ch)) {
+      raise(new ParseError(`Unexpected '${ch}'`, state), true)
     }
     consume(state)
     return ch
