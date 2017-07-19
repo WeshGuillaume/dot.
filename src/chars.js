@@ -9,6 +9,9 @@ import { ParseError } from './errors'
 function satisfy (check, type) {
   return state => {
     const ch = state.value.input.charAt(0)
+    if (!ch || !ch.length) {
+      return state.error(new ParseError('Unexpected end of input', state))
+    }
     if (check(ch)) {
       state.consumeChar()
       return state.return(ch)

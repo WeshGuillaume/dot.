@@ -4,6 +4,10 @@ import { createState } from './state'
 import { symbol, lexeme } from './strings'
 
 import {
+  string,
+} from './programming'
+
+import {
   char,
   space,
   letter,
@@ -14,10 +18,17 @@ import {
 } from './chars'
 
 import {
+  number,
+  float,
+  integer,
+} from './numbers'
+
+import {
   maybe,
   sequence,
   skip,
   skipMany,
+  many1,
   many,
 } from './combinators'
 
@@ -69,7 +80,7 @@ function testSequence (chs, input, output) {
 
 // testSequence('abc', 'abcd', 'abc')
 
-const s = createState({ input: '  abcd  e' })
-const parser = lexeme(symbol('abcd'))
+const s = createState({ input: '  . ' })
+const parser = sequence(skipMany(space), char('.'), skipMany(space))
 const s1 = parser(s)
 console.log(s1.value)

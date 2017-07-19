@@ -25,15 +25,11 @@ function symbol (str) {
 
 function lexeme (p) {
   return state => {
-    const s = sequence(
-      skipMany(space),
-      p,
-      skipMany(space),
-    )(state.clone())
-    if (s.value.error) {
-      return state.error(s.value.error)
+    const ret = sequence(skipMany(space), p, skipMany(space))
+    if (ret.value.error) {
+      return state.error(ret.value.error)
     }
-    return s.return(s.value.return[0])
+    return ret.return(ret.value.return[0])
   }
 }
 

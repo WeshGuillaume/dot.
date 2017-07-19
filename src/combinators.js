@@ -23,7 +23,7 @@ function maybe (p) {
 }
 
 function sequenceOne (state, parser) {
-  if (!!state.value.error) { return null }
+  if (!!state.value.error) { return state }
   const ret = parser(state.clone())
   if (!!ret.value.error) { return ret }
   return state.setState({
@@ -59,8 +59,8 @@ function sequence (...ps) {
 function oneOf (...ps) {
   return state => {
     for (const p of ps) {
-      const s = state.clone()
-      if (!p(s).value.error) {
+      const s = p(state.clone())
+      if (!s.value.error) {
         return s
       }
     }
@@ -102,7 +102,7 @@ function many1 (p) {
       return state.error(new ParseError(`Unexpected '${state.value.input.charAt(0)}'`, state))
     }
     const others = many(p)(firstState.clone())
-    return state.return([
+    return others.return([
       firstState.value.return,
       ...others.value.return,
     ])
