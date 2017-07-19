@@ -1,6 +1,5 @@
 
 import { NO_MATCH, ParseError } from './errors'
-import { number, space, noneOf, digit, char, letter } from './chars'
 
 /**
  * Combinators
@@ -15,30 +14,25 @@ import { number, space, noneOf, digit, char, letter } from './chars'
  */
 function maybe (p) {
   return state => {
-    state.save()
-    try {
-      const ret = p(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      return NO_MATCH
+    const stateTmp = p(state.clone())
+    if (state.value.error) {
+      return state.return(NO_MATCH)
     }
+    return stateTmp
   }
 }
 
-function lookAhead (p) {
-  return state => {
-    state.save()
-    try {
-      const ret = p(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      return NO_MATCH
-    }
-  }
+function sequenceOne (state, parser) {
+  if (!!state.value.error) { return state }
+  const ret = parser(state.clone())
+  if (!!ret.value.error) { return ret }
+  return state.setState({
+    return: [
+      ...state.value.return,
+      ...(ret.value.return === NO_MATCH ? [] : [ret.value.return]),
+    ],
+    input: ret.value.input,
+  })
 }
 
 /**
@@ -49,7 +43,11 @@ function lookAhead (p) {
  */
 function sequence (...ps) {
   return state => {
-    return ps.map(p => p(state)).filter(e => e !== NO_MATCH)
+    const s = ps.reduce(
+      sequenceOne,
+      state.setState({ return: [] })
+    )
+    return s
   }
 }
 
@@ -60,19 +58,13 @@ function sequence (...ps) {
  */
 function oneOf (...ps) {
   return state => {
-    const list = ps.map(maybe)
-    for (const p of list) {
-      try {
-        state.save()
-        const ret = p(state)
-        if (ret !== NO_MATCH) {
-          state.apply()
-          return ret
-        }
-      } catch (e) { state.reset() }
+    for (const p of ps) {
+      const s = p(state.clone())
+      if (!s.value.error) {
+        return s
+      }
     }
-    const input = state('input')
-    throw new ParseError(`Unexpected ${input.charAt(0)}`, state)
+    return state.error(new ParseError(`Unexpected token: ${state.value.input.charAt(0)}`, state))
   }
 }
 
@@ -83,13 +75,16 @@ function oneOf (...ps) {
  */
 function many (p) {
   return state => {
-    const acc = []
+    let ret = state.setState({ return: [] })
     while (true) {
-      try {
-        acc.push(p(state))
-      } catch (e) {
-        return acc
+      const out = p(ret.clone())
+      if (out.value.error) {
+        return ret
       }
+      ret = out.return([
+        ...ret.value.return,
+        out.value.return,
+      ])
     }
   }
 }
@@ -101,9 +96,16 @@ function many (p) {
  */
 function many1 (p) {
   return state => {
-    const first = p(state)
-    const rest = many(p)(state)
-    return [first, ...rest]
+    const s = state.clone()
+    const firstState = p(s)
+    if (firstState.value.error) {
+      return state.error(new ParseError(`Unexpected '${state.value.input.charAt(0)}'`, state))
+    }
+    const others = many(p)(firstState.clone())
+    return others.return([
+      firstState.value.return,
+      ...others.value.return,
+    ])
   }
 }
 
@@ -117,120 +119,55 @@ function many1 (p) {
  */
 function between (p1, p2) {
   return p => state => {
-    let _
-    state.save()
-    try {
-      _ = p1(state)
-      const ret = p(state)
-      _ = p2(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      throw e
+    const ret = sequence(skip(p1), p, skip(p2))(state.clone())
+    if (ret.value.error) {
+      return state.error(ret.value.error)
     }
+    return ret.return(ret.value.return[0])
   }
 }
 
 /**
- * sepBy1
+ * sepBy
  *
- * return an array of one or more occurence of p separated by sep
- */
-function sepBy1 (sep) {
-  return p => state => {
-    const tmp = sequence(p, many(sequence(sep, p)))
-    const ret = tmp(state)
-    return [ret[0], ...ret[1].map(([_, e]) => e)]
-  }
-}
-
-/**
- * sepBy1
- *
- * return an array of one or more occurence of p separated by sep
+ * return an array of zero or more occurence of p separated by sep
  */
 function sepBy (sep) {
   return p => state => {
-    const ret = maybe(sepBy1(sep)(p))(state)
-    if (ret === NO_MATCH) { return [] }
-    return ret
+    const s = sepBy1(sep)(p)(state.clone())
+    if (s.value.error) { return state.return([]) }
+    return s
   }
 }
 
-/**
- * endByFactory : not exported
- *
- * allows us to generate endBy and endBy1
- */
-function endByF (manyF) {
-  return end => p => state => {
-    state.save()
-    try {
-      const ret = manyF(p)(state)
-      const _ = end(state)
-      state.apply()
-      return ret
-    } catch (e) {
-      state.reset()
-      throw e
+function sepBy1 (sep) {
+  return p => state => {
+    const s = p(state.clone())
+    if (s.value.error) { return state.error(s.value.error) }
+    const ret = many(sequence(skip(sep), p))(s)
+    if (ret.value.error) { return state.error(ret.value.error) }
+    return ret.return([s.value.return, ...ret.value.return.map(e => e[0])])
+  }
+}
+
+function skip (p) {
+  return state => {
+    const ret = p(state.clone())
+    if (ret.value.error) {
+      return state.error(ret.value.error)
     }
-  }
-}
-
-/**
- * endBy:
- *
- * parse zero or more occurence of a parser ended by another parser
- */
-const endBy = endByF(many)
-
-/**
- * endBy1:
- *
- * parse one or more occurence of a parser ended by another parser
- */
-const endBy1 = endByF(many1)
-
-function skip (p) {
-  return state => {
-    const ret = lookAhead(p)(state)
-    return NO_MATCH
-  }
-}
-
-function skip (p) {
-  return state => {
-    try {
-      const ret = p(state)
-    } catch (e) {}
-    return NO_MATCH
+    return ret.return(NO_MATCH)
   }
 }
 
 function skipMany (p) {
   return state => {
-    try {
-      skip(many(p))(state)
-    } catch (e) {}
-    return NO_MATCH
+    return skip(many(p))(state.clone())
   }
 }
 
-const lexeme = p => state => {
-  const ret = sequence(
-    skipMany(space),
-    p,
-    skipMany(space)
-  )(state)
-  return ret[0]
-}
-
 export {
-  lexeme,
   maybe,
-  endBy1,
-  endBy,
   many1,
   many,
   sepBy,

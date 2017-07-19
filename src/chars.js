@@ -1,84 +1,38 @@
 
 import { ParseError } from './errors'
-import { oneOf, many1 } from './combinators'
-import { getFisrtChar, consume } from './utils'
-import { number } from './numbers'
 
 /**
  * Characters
  * ----------------------------------------------------------------------------
  */
 
-/**
- * char
- *
- * parse a single character in the source
- *
- * in case of success:
- *  - adjust the input line and column
- *  - slice the input
- * in case of error:
- *  - throw a ParseError
- */
-function char (c) {
+function satisfy (check, type) {
   return state => {
-    const ch = getFisrtChar(state)
-    if (ch !== c) {
-      throw new ParseError(`Unexpected '${ch}', expected '${c}'`, state)
+    const ch = state.value.input.charAt(0)
+    if (!ch || !ch.length) {
+      return state.error(new ParseError('Unexpected end of input', state))
     }
-    consume(state)
-    return ch
-  }
-}
-
-function digit (state) {
-  const ch = getFisrtChar(state)
-  if (!ch.match(/\d/)) {
-    throw new ParseError(`Unexpected '${ch}', expected a digit`, state)
-  }
-  consume(state)
-  return ch
-}
-
-function operator (state) {
-  const ch = getFisrtChar(state)
-  if (['+', '-', '/', '.', '%'].includes(ch)) {
-    throw new ParseError(`Unexpected '${ch}', expected an operator`, state)
-  }
-  consume(state)
-  return ch
-}
-
-function letter (state) {
-  const ch = getFisrtChar(state)
-  if (!ch.match(/[a-zA-Z]/)) {
-    throw new ParseError(`Unexpected '${ch}', expected a letter`, state)
-  }
-  consume(state)
-  return ch
-}
-
-function noneOf (chs) {
-  return state => {
-    const ch = getFisrtChar(state)
-    if (chs.includes(ch)) {
-      throw new ParseError(`Unexpected '${ch}'`, state)
+    if (check(ch)) {
+      state.consumeChar(ch)
+      return state.return(ch)
     }
-    consume(state)
-    return ch
+    return (state.error(new ParseError(`Unexpected '${ch}', expected ${type}`, state)))
   }
 }
 
-const alphaNum = oneOf(digit, letter)
-
-const space = oneOf(char(' '), char('\t'), char('\n'))
+const char = c => satisfy(v => v === c, `'${c}'`)
+const digit = satisfy(v => v.match(/\d/), 'a number')
+const letter = satisfy(v => v.match(/[a-zA-Z]/), 'a letter')
+const alphaNum = satisfy(v => v.match(/[a-zA-Z0-9]/), 'an alpha numeric char')
+const operator = satisfy(v => '+/-*%'.indexOf(v) > -1, 'an operator')
+const space = satisfy(v => ' \t\n\r'.indexOf(v) > -1, 'a space')
+const noneOf = s => satisfy(v => s.indexOf(v) === -1, `none of '${s}'`)
 
 export {
   space,
   char,
   letter,
   digit,
-  number,
   alphaNum,
   operator,
   noneOf,

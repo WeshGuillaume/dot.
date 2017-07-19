@@ -1,8 +1,8 @@
 
 import { space, noneOf, digit, char, letter } from './chars'
 import { number } from './numbers'
-import { skipMany, many, lexeme, maybe, between, oneOf, many1, sequence, endBy, skip, sepBy } from './combinators'
-import { symbol } from './strings'
+import { skipMany, many, maybe, between, oneOf, many1, sequence, endBy, skip, sepBy, sepBy1 } from './combinators'
+import { symbol, lexeme } from './strings'
 import { createState } from './state'
 
 
@@ -15,40 +15,85 @@ const {
   string,
 } = require('./programming')
 
-
-const key = string
-
-const boolean = oneOf(symbol('true'), symbol('false'))
+const surroundedByBraces = between(openBrace, closeBrace)
+const surroundedByBracket = between(openBracket, closeBracket)
 
 function value (state) {
-  return lexeme(oneOf(boolean, string, array, object, number))(state)
+  return lexeme(oneOf(jsonObject, jsonArray, jsonString, jsonNumber))(state.clone())
 }
 
-function array (state) {
-  const delimiter = between(openBracket, closeBracket)
-  const values = sepBy(comma)(value)
-  return delimiter(values)(state)
+function jsonNumber (state) {
+  const num = number(state.clone())
+  if (num.value.error) {
+    return state.error(num.value.error)
+  }
+  return num.return(parseInt(num.value.return))
 }
 
-function pair (state) {
-  const ret = sequence(key, skip(char(':')), value)(state)
-  return { [ret[0]]: ret[1] }
+function jsonString (state) {
+  const str = string(state.clone())
+  return str
 }
 
-function propsList (state) {
-  const ret = sepBy(comma)(pair)(state)
-  return Object.assign({}, ...ret)
+function jsonArray (state) {
+  const s = surroundedByBracket(
+    sepBy1(char(','))(value)
+  )(state.clone())
+  if (s.value.error) {
+    return state.error(s.value.error)
+  }
+  return s
 }
 
-function object (state) {
-  return between(
-    openBrace,
-    closeBrace
-  )(propsList)(state)
+function keyValuePair (state) {
+  const ret = sequence(lexeme(string), skip(char(':')), value)(state.clone())
+  if (ret.value.error) {
+    return state.error(ret.value.error)
+  }
+  return ret.return({ [ret.value.return[0]]: ret.value.return[1] })
 }
 
-const state = createState(`{1 2 3  23.213   "hello"  1 0 "fewf"}`)
-const parser = between(openBrace, closeBrace)(many(lexeme(oneOf(number, string))))
-const ret = parser(state)
-console.log(ret)
-console.log(state())
+function jsonObject (state) {
+  const list = sepBy1(lexeme(comma))(keyValuePair)
+  const ret = surroundedByBraces(list)(state.clone())
+  if (ret.value.error) {
+    return state.error(ret.value.error)
+  }
+  return ret.return(Object.assign({}, ...ret.value.return))
+}
+
+const state = createState({
+  input: `
+    {
+      "hello": "world",
+      "age": 22,
+      "friends": [
+        {
+          "name": "john", "age": 32
+        }
+      ]
+    }
+  `,
+})
+
+const parser = value
+console.log(JSON.stringify(parser(state).value, null, 2))
+
+/**
+{
+  "column": 1,
+  "line": 1,
+  "input": "",
+  "return": {
+    "hello": "world",
+    "age": 22,
+    "friends": [
+      {
+        "name": "john",
+        "age": 32
+      }
+    ]
+  },
+  "error": null
+}
+*/

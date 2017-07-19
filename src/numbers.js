@@ -1,37 +1,34 @@
 
-import chars from './chars'
+import { char, digit } from './chars'
 import { many1, many, oneOf, sequence } from './combinators'
 
-function digit (state) {
-  return parseInt(chars.digit(state))
-}
-
 function integer (state) {
-  const ret = many1(chars.digit)(state)
-  return parseInt(ret.join(''))
+  const s = many1(digit)(state.clone())
+  if (s.value.error) {
+    return state.error(s.value.error)
+  }
+  return s.return(s.value.return.join(''))
 }
 
 function float (state) {
 
+  const s = state.clone()
+
   const ret = sequence(
-    integer,
-    chars.char('.'),
-    integer
-  )(state)
+    integer, char('.'), integer
+  )(s)
 
-  return parseFloat(ret.join(''))
+  if (ret.value.error) {
+    return state.error(ret.value.error)
+  }
+
+  return ret.return(ret.value.return.join(''))
 }
 
-const number = state => {
-  console.log('hello')
-  const ret = oneOf(float, integer)(state)
-  console.log('hola')
-  return ret
-}
+const number = oneOf(float, integer)
 
 export {
   number,
   integer,
   float,
-  digit,
 }
