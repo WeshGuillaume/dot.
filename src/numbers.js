@@ -18,6 +18,10 @@ function float (state) {
     integer, char('.'), integer
   )(s)
 
+  if (ret.value.error) {
+    return state.error(ret.value.error)
+  }
+
   return ret.return(ret.value.return.join(''))
 }
 

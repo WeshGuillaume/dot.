@@ -25,7 +25,7 @@ function symbol (str) {
 
 function lexeme (p) {
   return state => {
-    const ret = sequence(skipMany(space), p, skipMany(space))
+    const ret = sequence(skipMany(space), p, skipMany(space))(state.clone())
     if (ret.value.error) {
       return state.error(ret.value.error)
     }

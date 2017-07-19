@@ -13,7 +13,7 @@ function satisfy (check, type) {
       return state.error(new ParseError('Unexpected end of input', state))
     }
     if (check(ch)) {
-      state.consumeChar()
+      state.consumeChar(ch)
       return state.return(ch)
     }
     return (state.error(new ParseError(`Unexpected '${ch}', expected ${type}`, state)))

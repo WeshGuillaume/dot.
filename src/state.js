@@ -4,7 +4,7 @@
  */
 
 const defaultStore = {
-  column: 0,
+  column: 1,
   line: 1,
   input: '',
   return: null,
@@ -38,7 +38,15 @@ function createState (state) {
       return createState(Object.assign({}, state, { error: null, return: value }))
     },
 
-    consumeChar: () => state.input = state.input.slice(1),
+    consumeChar: (ch) => {
+      state.input = state.input.slice(1)
+      if (ch === '\n') {
+        state.line++
+        state.column = 1
+      } else {
+        state.column++
+      }
+    },
 
     clone: () => createState(
       Object.assign({}, state, { error: null, return: null })

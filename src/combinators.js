@@ -118,13 +118,19 @@ function many1 (p) {
  * usage: between(char('('), char(')'))(symbol('Hello'))
  */
 function between (p1, p2) {
-  return p => sequence(p1, p, p2)
+  return p => state => {
+    const ret = sequence(skip(p1), p, skip(p2))(state.clone())
+    if (ret.value.error) {
+      return state.error(ret.value.error)
+    }
+    return ret.return(ret.value.return[0])
+  }
 }
 
 /**
- * sepBy1
+ * sepBy
  *
- * return an array of one or more occurence of p separated by sep
+ * return an array of zero or more occurence of p separated by sep
  */
 function sepBy (sep) {
   return p => state => {
@@ -138,8 +144,9 @@ function sepBy1 (sep) {
   return p => state => {
     const s = p(state.clone())
     if (s.value.error) { return state.error(s.value.error) }
-    const ret = many(sequence(sep, p))(s)
-    return state.return([s.value.return, ...ret.value.return])
+    const ret = many(sequence(skip(sep), p))(s)
+    if (ret.value.error) { return state.error(ret.value.error) }
+    return ret.return([s.value.return, ...ret.value.return.map(e => e[0])])
   }
 }
 
