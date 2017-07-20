@@ -1,32 +1,33 @@
 
 import { ParseError } from './errors'
+import { parser } from './parser'
 
 /**
  * Characters
  * ----------------------------------------------------------------------------
  */
 
-function satisfy (check, type) {
-  return state => {
-    const ch = state.value.input.charAt(0)
-    if (!ch || !ch.length) {
-      return state.error(new ParseError('Unexpected end of input', state))
-    }
-    if (check(ch)) {
+function satisfy (fun) {
+  return parser(
+    'a character',
+    state => {
+      const ch = state.value.input.charAt(0)
+      if (!fun(ch)) {
+        return state.error(new ParseError(`Unexpected token '${ch}', expected: ${expected}`, state))
+      }
       state.consumeChar(ch)
-      return state.return(ch)
+      return state.return(() => ch)
     }
-    return (state.error(new ParseError(`Unexpected '${ch}', expected ${type}`, state)))
-  }
+  )
 }
 
-const char = c => satisfy(v => v === c, `'${c}'`)
-const digit = satisfy(v => v.match(/\d/), 'a number')
-const letter = satisfy(v => v.match(/[a-zA-Z]/), 'a letter')
-const alphaNum = satisfy(v => v.match(/[a-zA-Z0-9]/), 'an alpha numeric char')
-const operator = satisfy(v => '+/-*%'.indexOf(v) > -1, 'an operator')
-const space = satisfy(v => ' \t\n\r'.indexOf(v) > -1, 'a space')
-const noneOf = s => satisfy(v => s.indexOf(v) === -1, `none of '${s}'`)
+const char = c => parser(`character ${c}`, satisfy(v => v === c, `'${c}'`))
+const digit = parser('a digit', satisfy(v => v.match(/\d/)))
+const letter = parser('a letter', satisfy(v => v.match(/[a-zA-Z]/)))
+const alphaNum = parser('an alpha-numeric value', satisfy(v => v.match(/[a-zA-Z0-9]/)))
+const operator = parser('an operator', satisfy(v => '+/-*%'.indexOf(v) > -1))
+const space = parser('a space character', satisfy(v => ' \t\n\r'.indexOf(v) > -1))
+const noneOf = s => parser(`none of these: "${s}"`, satisfy(v => s.indexOf(v) === -1))
 
 export {
   space,

@@ -1,19 +1,23 @@
 
 function parser (
+  name,
   p,
   success = v => v,
-  error = v => v,
+  setError = true
 ) {
-  return state => {
+  const handler = state => {
     if (state.value.error) {
       return state
     }
     const result = p(state.clone())
     if (result.value.error) {
-      return state.error(error(result))
+      if (setError) { result.value.error.expected = name }
+      return state.error(result.value.error)
     }
-    return result.return(success(result.value.return))
+    return result.return(old => success(old, result.value.return))
   }
+  handler.parserName = name
+  return handler
 }
 
 export { parser }

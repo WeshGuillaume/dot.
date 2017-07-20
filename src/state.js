@@ -17,6 +17,8 @@ function createState (state) {
 
   return {
 
+    type: 'state',
+
     lineUp: () => {
       state.line++
       state.column = 1
@@ -27,15 +29,27 @@ function createState (state) {
     },
 
     error: error => {
-      if (error.type !== 'ParseError') {
-        throw error
-      } else {
+      if (error.type === 'ParseError') {
         return createState(Object.assign({}, state, { return: null, error }))
       }
+      if (error.type === 'state') {
+        return createState(Object.assign({}, state, { return: null, error: error.value.error }))
+      }
+      throw error
     },
 
-    return: value => {
-      return createState(Object.assign({}, state, { error: null, return: value }))
+    return: fun => {
+      return createState(
+        Object.assign(
+          {},
+          state,
+          {
+            return: state.error
+              ? state.return
+              : fun(state.return),
+          }
+        )
+      )
     },
 
     consumeChar: (ch) => {

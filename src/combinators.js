@@ -1,5 +1,6 @@
 
 import { NO_MATCH, ParseError } from './errors'
+import { parser } from './parser'
 
 /**
  * Combinators
@@ -13,13 +14,15 @@ import { NO_MATCH, ParseError } from './errors'
  * rollback
  */
 function maybe (p) {
-  return state => {
-    const stateTmp = p(state.clone())
-    if (state.value.error) {
-      return state.return(NO_MATCH)
+  return parser(
+    `maybe ${p.parserName}`,
+    state => {
+      const ret = p(state)
+      return ret.value.error
+        ? state.return(() => NO_MATCH)
+        : ret
     }
-    return stateTmp
-  }
+  )
 }
 
 function sequenceOne (state, parser) {
@@ -42,13 +45,17 @@ function sequenceOne (state, parser) {
  * it also make sure to remove the NO_MATCH due to maybe parsers
  */
 function sequence (...ps) {
-  return state => {
-    const s = ps.reduce(
-      sequenceOne,
-      state.setState({ return: [] })
-    )
-    return s
-  }
+  return parser(
+    `a sequence of [${ps.map(({ parserName }) => parserName).join(', ')}]`,
+    state => {
+      return ps.reduce(
+        (s, p) => p(s).return(v => [...s.value.return, v]),
+        state.return(() => [])
+      )
+    },
+    v => v.filter(e => e !== NO_MATCH),
+    false
+  )
 }
 
 /**
@@ -57,15 +64,15 @@ function sequence (...ps) {
  * takes a list of parser, apply them in order and return the first match
  */
 function oneOf (...ps) {
-  return state => {
-    for (const p of ps) {
-      const s = p(state.clone())
-      if (!s.value.error) {
+  return parser(state => {
+    for (const p of ps.map(maybe)) {
+      const s = p(state)
+      if (!s.value.return !== NO_MATCH) {
         return s
       }
     }
     return state.error(new ParseError(`Unexpected token: ${state.value.input.charAt(0)}`, state))
-  }
+  })
 }
 
 /**
