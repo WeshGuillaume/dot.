@@ -1,9 +1,23 @@
 
+import { expect } from 'chai'
+
+import { createState } from '../src/state'
+
+import {
+  string,
+} from '../src/programming'
+
+function testSuccess (parser, input, expected) {
+  it(`Success: ${parser.parserName}`, () => {
+    const state = createState({ input })
+    const result = parser(state)
+    expect(result.value.return).to.equal(expected)
+    expect(result.value.error).to.equal(null)
+  })
+}
+
 describe('Programming', () => {
 
-  it('match a string')
-  it('match a json array')
-  it('match a json object')
-  it('match a package.json')
+  testSuccess(string, '"hello"', 'hello')
 
 })

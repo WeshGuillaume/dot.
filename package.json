@@ -4,7 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "test": "mocha --require babel-register tests/"
+    "test": "mocha --require babel-register tests/ --watch",
+    "testit": "babel-node src/test"
   },
   "dependencies": {
     "babel-preset-es2015": "^6.24.1",
