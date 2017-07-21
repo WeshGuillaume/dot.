@@ -19,47 +19,35 @@ const surroundedByBraces = between(openBrace, closeBrace)
 const surroundedByBracket = between(openBracket, closeBracket)
 
 function value (state) {
-  return lexeme(oneOf(jsonObject, jsonArray, jsonString, jsonNumber))(state.clone())
+  return lexeme(oneOf(jsonObject, jsonArray, jsonString, jsonNumber))(state)
 }
 
 function jsonNumber (state) {
-  const num = number(state.clone())
-  if (num.value.error) {
-    return state.error(num.value.error)
-  }
-  return num.return(parseInt(num.value.return))
+  return number(state).return(parseInt)
 }
 
 function jsonString (state) {
-  const str = string(state.clone())
-  return str
+  return string(state)
 }
 
 function jsonArray (state) {
-  const s = surroundedByBracket(
+  return surroundedByBracket(
     sepBy1(char(','))(value)
-  )(state.clone())
-  if (s.value.error) {
-    return state.error(s.value.error)
-  }
-  return s
+  )(state)
 }
 
 function keyValuePair (state) {
-  const ret = sequence(lexeme(string), skip(char(':')), value)(state.clone())
-  if (ret.value.error) {
-    return state.error(ret.value.error)
-  }
-  return ret.return({ [ret.value.return[0]]: ret.value.return[1] })
+  return sequence(
+    lexeme(string),
+    skip(char(':')),
+    value
+  )(state).return(v => ({ [v[0]]: v[1] }))
 }
 
 function jsonObject (state) {
   const list = sepBy1(lexeme(comma))(keyValuePair)
-  const ret = surroundedByBraces(list)(state.clone())
-  if (ret.value.error) {
-    return state.error(ret.value.error)
-  }
-  return ret.return(Object.assign({}, ...ret.value.return))
+  return surroundedByBraces(list)(state)
+    .return(list => Object.assign({}, ...list))
 }
 
 const state = createState({

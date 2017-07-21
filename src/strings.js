@@ -1,5 +1,6 @@
 
 import { sequence, skipMany } from './combinators'
+import { parser } from './parser'
 import { char, space } from './chars'
 
 /**
@@ -13,24 +14,24 @@ import { char, space } from './chars'
  * parse a string using a sequence of char parsers
  */
 function symbol (str) {
-  return state => {
-    // TODO without char
-    const ret = sequence(...str.split('').map(char))(state.clone())
-    if (ret.value.error) {
-      return state.error(ret.value.error)
+  return parser(
+    `symbol ${str}`,
+    state => {
+      // TODO without char
+      sequence(...str.split('').map(char))(state)
+        .return(v => v.join(''))
     }
-    return ret.return(ret.value.return.join(''))
-  }
+  )
 }
 
 function lexeme (p) {
-  return state => {
-    const ret = sequence(skipMany(space), p, skipMany(space))(state.clone())
-    if (ret.value.error) {
-      return state.error(ret.value.error)
+  return parser(
+    `lexeme(${p.parserName})`,
+    state => {
+      return sequence(skipMany(space), p, skipMany(space))(state)
+        .return(v => v[0])
     }
-    return ret.return(ret.value.return[0])
-  }
+  )
 }
 
 export {
