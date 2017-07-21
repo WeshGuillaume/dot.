@@ -18,7 +18,7 @@ function symbol (str) {
     `symbol(${str})`,
     state => {
       // TODO without char
-      sequence(...str.split('').map(char))(state)
+      return sequence(...str.split('').map(char))(state)
         .return(v => v.join(''))
     }
   )
