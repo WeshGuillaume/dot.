@@ -15,7 +15,7 @@ import { parser } from './parser'
  */
 function maybe (p) {
   return parser(
-    `maybe ${p.parserName}`,
+    `maybe(${p.parserName})`,
     state => {
       const ret = p(state)
       return ret.value.error
@@ -69,7 +69,7 @@ function oneOf (...ps) {
     state => {
       for (const p of ps.map(maybe)) {
         const s = p(state)
-        if (!s.value.return !== NO_MATCH) {
+        if (s.value.return !== NO_MATCH) {
           return s
         }
       }
@@ -95,9 +95,9 @@ function many (p) {
         if (out.value.error) {
           return ret
         }
-        ret = out.return([
+        ret = out.return(value => [
           ...ret.value.return,
-          out.value.return,
+          value,
         ])
       }
     }
@@ -114,10 +114,11 @@ function many1 (p) {
     `one or more ${p.parserName}`,
     state => {
       const firstState = p(state)
-      const others = many(p)(firstState).return([
-        firstState.value.return,
-        ...others.value.return,
-      ])
+      return many(p)(firstState)
+        .return(v => [
+          firstState.value.return,
+          ...v,
+        ])
     }
   )
 }
@@ -168,19 +169,18 @@ function sepBy1 (sep) {
 }
 
 function skip (p) {
-  return state => {
-    const ret = p(state.clone())
-    if (ret.value.error) {
-      return state.error(ret.value.error)
-    }
-    return ret.return(NO_MATCH)
-  }
+  return parser(
+    `skip ${p.parserName}`,
+    p,
+    () => NO_MATCH
+  )
 }
 
 function skipMany (p) {
-  return state => {
-    return skip(many(p))(state.clone())
-  }
+  return parser(
+    `skip many ${p.parserName}`,
+    state => skip(many(p))(state)
+  )
 }
 
 export {

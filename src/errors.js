@@ -2,7 +2,7 @@
 const NO_MATCH = Symbol('NO_MATCH')
 
 class ParseError extends Error {
-  constructor (message, state) {
+  constructor (message, state = { value: {} }) {
     super(`[ParseError]: ${message}: position: ${state.value.line}:${state.value.column + 1}`)
     this.type = 'ParseError'
   }
