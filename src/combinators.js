@@ -87,7 +87,7 @@ function oneOf (...ps) {
  */
 function many (p) {
   return parser(
-    `one or more ${p.parserName}`,
+    `zero or more ${p.parserName}`,
     state => {
       let ret = state.setState({ return: [] })
       while (true) {
@@ -135,9 +135,8 @@ function between (p1, p2) {
   return p => parser(
     `${p.parserName} between ${p1.parserName} and ${p2.parserName}`,
     state => {
-      return sequence(skip(p1), p, skip(p2))(state)
+      return sequence(skip(p1), p, skip(p2))(state).return(b => b[0])
     },
-    v => v[0]
   )
 }
 

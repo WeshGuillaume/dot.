@@ -1,26 +1,16 @@
 
 import { NO_MATCH, ParseError } from './errors'
 import { createState } from './state'
+import { date } from './date'
 
-import {
-  sequence,
-  skipMany,
-  maybe,
-  oneOf,
-} from './combinators'
+const testStrings = [
+  '1 hour and 5 minutes',
+  '1 hour and 10',
+  '1:05',
+  '2 minutes 2 seconds',
+  '12hours',
+].forEach(input => {
+  const state = createState({ input })
+  console.log(date(state).value.return)
+})
 
-import {
-  char,
-} from './chars'
-
-const s1 = sequence(
-  char('h'),
-  maybe(char('e')),
-  skipMany(char('l')),
-  oneOf(char('w'), char('o'))
-)(createState({ input: 'hello' }))
-  .return(v => v.join(''))
-
-const s2 = oneOf(char('f'), char('o'))(createState({ input: 'ow' }))
-
-console.log(s1.value)
