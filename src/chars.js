@@ -7,9 +7,9 @@ import { parser } from './parser'
  * ----------------------------------------------------------------------------
  */
 
-function satisfy (fun) {
+export function satisfy (fun) {
   return parser(
-    `satisfy(${fun.toString().replace(/\n\s+/g, ' ')})`,
+    `satisfy([javascript])`,
     state => {
       if (!state) { process.exit(0) }
       const ch = state.value.input.charAt(0)

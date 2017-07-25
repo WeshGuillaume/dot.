@@ -25,6 +25,38 @@ function maybe (p) {
   )
 }
 
+
+function range (min = 0, max) {
+  return p => 
+    parser(
+      `range(${min}, ${max})(${p.parserName})`,
+      state => {
+        let first = min === 0
+          ? state.return(v => [])
+          : sequence(
+            ...(new Array(min)).fill(0).map(() => p)
+          )(state)
+
+        if (first.value.error) {
+          return first
+        }
+
+        while (min < max) {
+          const out = p(first)
+          if (out.value.error) {
+            return first
+          }
+          first = out.return(
+            v => [...first.value.return, v]
+          )
+          min += 1
+        }
+
+        return first
+      }
+    )
+}
+
 function sequenceOne (state, parser) {
   if (!!state.value.error) { return state }
   const ret = parser(state.clone())
@@ -193,4 +225,5 @@ export {
   oneOf,
   skip,
   skipMany,
+  range,
 }

@@ -9,6 +9,7 @@ const defaultStore = {
   input: '',
   return: null,
   error: null,
+  store: {},
 }
 
 function createState (state) {
@@ -68,8 +69,21 @@ function createState (state) {
 
     ignoreError: () => (state.error = null),
 
+    store: update => {
+      return createState(Object.assign(
+        {},
+        state,
+        { store: Object.assign({}, state.store, update) }
+      ))
+    },
+
     setState: update => {
-      const s = Object.assign({}, state, update, { error: null })
+      const s = Object.assign(
+        {},
+        state,
+        update,
+        { error: null }
+      )
       return createState(s)
     },
 

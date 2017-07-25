@@ -35,10 +35,10 @@ function parser (
         return state.error(result.value.error)
       }
 
-      return result.return(old => success(old, result.value.return))
+      return result.return(old => success(old, result))
 
     } catch (e) {
-      console.log(name, e)
+      console.log(name, e, state.value)
       process.exit(0)
       throw new Error(`[Uncaught error: ${name}]: ${e.message}`)
     }
