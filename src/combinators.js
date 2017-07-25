@@ -46,7 +46,7 @@ function sequenceOne (state, parser) {
  */
 function sequence (...ps) {
   return parser(
-    `a sequence of [${ps.map(({ parserName }) => parserName).join(', ')}]`,
+    `sequence(${ps.map(({ parserName }) => parserName).join(', ')})`,
     state => {
       return ps.reduce(
         (s, p) => p(s).return(v => [...s.value.return, v]),
@@ -65,7 +65,7 @@ function sequence (...ps) {
  */
 function oneOf (...ps) {
   return parser(
-    `oneOf ${ps.map(p => p.parserName).join(', ')}`,
+    `oneOf(${ps.map(p => p.parserName).join(', ')})`,
     state => {
       for (const p of ps.map(maybe)) {
         const s = p(state)
@@ -87,7 +87,7 @@ function oneOf (...ps) {
  */
 function many (p) {
   return parser(
-    `zero or more ${p.parserName}`,
+    `many(${p.parserName})`,
     state => {
       let ret = state.setState({ return: [] })
       while (true) {
@@ -111,7 +111,7 @@ function many (p) {
  */
 function many1 (p) {
   return parser(
-    `one or more ${p.parserName}`,
+    `many1(${p.parserName})`,
     state => {
       const firstState = p(state)
       return many(p)(firstState)
@@ -133,7 +133,7 @@ function many1 (p) {
  */
 function between (p1, p2) {
   return p => parser(
-    `${p.parserName} between ${p1.parserName} and ${p2.parserName}`,
+    `between(${p1.parserName}, ${p2.parserName})(${p.parserName})`,
     state => {
       return sequence(skip(p1), p, skip(p2))(state).return(b => b[0])
     },
@@ -147,7 +147,7 @@ function between (p1, p2) {
  */
 function sepBy (sep) {
   return p => parser(
-    `${p.parserName} separated by ${sep.parserName}`,
+    `sepBy(${sep.parserName})(${p.parserName})`,
     state => {
       const s = sepBy1(sep)(p)(state)
       return s.value.error ? state.return(() => []) : s
@@ -157,7 +157,7 @@ function sepBy (sep) {
 
 function sepBy1 (sep) {
   return p => parser(
-    `${p.parserName} separated by ${sep.parserName}`,
+    `sepBy1(${sep.parserName})(${p.parserName})`,
     state => {
       const s = p(state)
       return many(sequence(skip(sep), p))(s).return(v => ([
@@ -169,7 +169,7 @@ function sepBy1 (sep) {
 
 function skip (p) {
   return parser(
-    `skip ${p.parserName}`,
+    `skip(${p.parserName})`,
     p,
     () => NO_MATCH
   )
@@ -177,7 +177,7 @@ function skip (p) {
 
 function skipMany (p) {
   return parser(
-    `skip many ${p.parserName}`,
+    `skipMany(${p.parserName})`,
     state => skip(many(p))(state)
   )
 }

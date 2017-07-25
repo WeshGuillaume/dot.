@@ -6,8 +6,19 @@ function parser (
   setError = true
 ) {
   const handler = state => {
-    try {
+    if (typeof name !== 'string') {
+      throw new Error('Parsers names have to be a string')
+    }
 
+    if (typeof p !== 'function') {
+      throw new Error(`Parser ${name} is invalid`)
+    }
+
+    if (!state || !state.value) {
+      throw new Error(`Invalid state provided to ${name}, ${JSON.stringify(state, null, 2)}`)
+    }
+
+    try {
       if (state.value.error) {
         return state
       }

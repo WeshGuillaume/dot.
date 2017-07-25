@@ -15,7 +15,7 @@ import { char, space } from './chars'
  */
 function symbol (str) {
   return parser(
-    `symbol(${str})`,
+    `symbol('${str}')`,
     state => {
       // TODO without char
       return sequence(...str.split('').map(char))(state)
@@ -26,7 +26,7 @@ function symbol (str) {
 
 function lexeme (p) {
   return parser(
-    `lexeme(${p.parserName})`,
+    `lexeme('${p.parserName}')`,
     state => {
       return sequence(skipMany(space), p, skipMany(space))(state)
         .return(v => v[0])

@@ -1,5 +1,5 @@
 
-const NO_MATCH = Symbol('NO_MATCH')
+const NO_MATCH = 'NO_MATCH'
 
 class ParseError extends Error {
   constructor (message, state = { value: {} }) {
