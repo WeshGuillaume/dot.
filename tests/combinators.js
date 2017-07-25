@@ -14,6 +14,7 @@ import {
   many,
   skipMany,
   skip,
+  range,
   between,
   sepBy1,
   sepBy,
@@ -39,4 +40,5 @@ describe('Combinators', () => {
   testSuccess(sepBy1(char(','))(char('a')), 'a,a', ['a', 'a'])
   testSuccess(skip(char('a')), 'a', NO_MATCH)
   testSuccess(skipMany(char('a')), 'aaaa', NO_MATCH)
+  testSuccess(range(2, 3)(char('a')), 'aab', ['a', 'a'])
 })
