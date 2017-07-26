@@ -75,12 +75,12 @@ function reAtom (dependencies) {
   return parser(
     'atom',
     state => oneOf(
-      reOr(dependencies),
       reDep(dependencies),
       reTimes(dependencies),
       reMany(dependencies),
       reMany1(dependencies),
       reMaybe(dependencies),
+      reOr(dependencies),
       reRange(dependencies),
       reChar(dependencies),
       reGroup(dependencies),
@@ -208,7 +208,7 @@ function reOr (dependencies) {
       reChar(dependencies),
       reGroup(dependencies)
     ))(state),
-    v => oneOf(...v)
+    v => v.length === 1 ? v[0] : oneOf(...v)
   )
 } 
 
@@ -240,6 +240,6 @@ const parse = compile(
 )
 */
 
-const state = createState({ input: '(vim)|(vi)' })
+const state = createState({ input: '((vim+)|(vi))*' })
 const result = reParser({})(state)
 console.log(result.value)
