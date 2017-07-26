@@ -5,6 +5,7 @@
 
 `[a-z]` -> range between a and z
 
+`a|b` -> a or b
 
 `a+` -> one or more a
 
