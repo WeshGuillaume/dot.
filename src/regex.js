@@ -30,13 +30,13 @@ function rangeToParser (ranges) {
 function reRange () {
   return parser(
     '.range',
-    bBrackets(
+    state => bBrackets(
       many1(sequence(
         alphaNum,
         skip(dash),
         alphaNum,
       ))
-    ),
+    )(state),
     rangeToParser
   )
 }
@@ -44,13 +44,15 @@ function reRange () {
 function reMaybe () {
   return parser(
     'maybe',
-    sequence(
+    state => sequence(
       oneOf(
         reChar(),
         reRange(),
+        reGroup(),
+        reCapture(),
       ),
       maybeOperator,
-    ),
+    )(state),
     v => maybe(v[0])
   )
 }
@@ -72,28 +74,32 @@ function reDep (dependencies) {
 function reAtom (dependencies) {
   return parser(
     'atom',
-    oneOf(
+    state => oneOf(
       reDep(dependencies),
       reTimes(dependencies),
       reMany(dependencies),
       reMany1(dependencies),
       reMaybe(dependencies),
+      reOr(dependencies),
       reRange(dependencies),
       reChar(dependencies),
-    )
+      reGroup(dependencies),
+    )(state)
   )
 }
 
 function reMany1 () {
   return parser(
     'many',
-    sequence(
+    state => sequence(
       oneOf(
         reChar(),
         reRange(),
+        reGroup(),
+        reCapture(),
       ),
       plusOperator,
-    ),
+    )(state),
     v => many1(v[0])
   )
 }
@@ -101,13 +107,15 @@ function reMany1 () {
 function reMany () {
   return parser(
     'many',
-    sequence(
+    state => sequence(
       oneOf(
         reChar(),
         reRange(),
+        reGroup(),
+        reCapture(),
       ),
       timesOperator,
-    ),
+    )(state),
     v => many(v[0])
   )
 }
@@ -115,10 +123,12 @@ function reMany () {
 function reTimes () {
   return parser(
     'times',
-    sequence(
+    state => sequence(
       oneOf(
         reChar(),
         reRange(),
+        reCapture(),
+        reGroup(),
       ),
       bBraces(
         sequence(
@@ -127,7 +137,7 @@ function reTimes () {
           integer
         )
       )
-    ),
+    )(state),
     v => range(v[1][0], v[1][1])(v[0])
   )
 }
@@ -146,8 +156,13 @@ function reChar () {
 function reParser (dependencies) {
   return parser(
     'parser',
-    lexeme(many(oneOf(reCapture(dependencies), reAtom(dependencies)))),
-    v => sequence(...v)
+    state => lexeme(many(
+      oneOf(
+        reCapture(dependencies),
+        reAtom(dependencies),
+      )
+    ))(state),
+    v => v.length === 1 ? v[0] : sequence(...v)
   )
 }
 
@@ -173,6 +188,30 @@ function reCapture (dependencies) {
   )
 }
 
+function reGroup (dependencies) {
+  return parser(
+    'group',
+    state => bParens(oneOf(reParser(dependencies), reOr(dependencies)))(state)
+  )
+}
+
+function reOr (dependencies) {
+  return parser(
+    'or',
+    state => sepBy1(or)(oneOf(
+      reDep(dependencies),
+      reTimes(dependencies),
+      reMany(dependencies),
+      reMany1(dependencies),
+      reMaybe(dependencies),
+      reRange(dependencies),
+      reChar(dependencies),
+      reGroup(dependencies)
+    ))(state),
+    v => v.length === 1 ? v[0] : oneOf(...v)
+  )
+} 
+
 function compile (name, source, ret, dependencies) {
   const state = createState({ input: source })
   const result = reParser(dependencies)(state)
@@ -182,25 +221,25 @@ function compile (name, source, ret, dependencies) {
   return parser(
     name,
     result.value.return,
-    (v, s) => Object.assign({}, s.value.store, ret(v, s.value.store))
+    (v, s) => Object.assign({}, s.store, ret(v, s.store))
   )
 }
 
-const url = `https?://www.{{domain:[a-z0-9]+}}.{{extension:{extension}}}`
+const url = `https?://(www.)?{{domain:[a-z0-9]+}}.{{extension:{extension}}}`
 const extension = parser(
   'extension',
   oneOf(symbol('fr'), symbol('com'))
 )
 
+  /*
 const parse = compile(
   'url',
   url,
   (_, { domain }) => ({ domain: domain.join('') }),
   { extension }
 )
+*/
 
-console.log(parse)
-
-const state = createState({ input: 'http://www.google.com' })
-console.log(parse(state).value)
-
+const state = createState({ input: '((vim+)|(vi))*' })
+const result = reParser({})(state)
+console.log(result.value)

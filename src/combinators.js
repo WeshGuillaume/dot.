@@ -187,12 +187,25 @@ function sepBy (sep) {
   )
 }
 
+function prevent (sep, p) {
+  return parser(
+    'prevent',
+    state => {
+      const test = sep(state)
+      if (!test.value.error) {
+        return state.error(new ParseError(`Unexpected separator ${sep.parserName}`))
+      }
+      return p(state)
+    }
+  )
+}
+
 function sepBy1 (sep) {
   return p => parser(
     `sepBy1(${sep.parserName})(${p.parserName})`,
     state => {
       const s = p(state)
-      return many(sequence(skip(sep), p))(s).return(v => ([
+      return many(sequence(skip(sep), prevent(sep, p)))(s).return(v => ([
         s.value.return, ...v.map(e => e[0])
       ]))
     }

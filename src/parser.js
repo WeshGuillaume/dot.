@@ -35,7 +35,7 @@ function parser (
         return state.error(result.value.error)
       }
 
-      return result.return(old => success(old, result))
+      return result.return(old => success(old, result.value))
 
     } catch (e) {
       console.log(name, e, state.value)
