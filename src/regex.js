@@ -41,15 +41,15 @@ function reRange () {
   )
 }
 
-function reMaybe () {
+function reMaybe (dependencies) {
   return parser(
     'maybe',
     state => sequence(
       oneOf(
-        reChar(),
-        reRange(),
-        reGroup(),
-        reCapture(),
+        reChar(dependencies),
+        reRange(dependencies),
+        reGroup(dependencies),
+        reCapture(dependencies),
       ),
       maybeOperator,
     )(state),
@@ -88,15 +88,15 @@ function reAtom (dependencies) {
   )
 }
 
-function reMany1 () {
+function reMany1 (dependencies) {
   return parser(
     'many',
     state => sequence(
       oneOf(
-        reChar(),
-        reRange(),
-        reGroup(),
-        reCapture(),
+        reChar(dependencies),
+        reRange(dependencies),
+        reGroup(dependencies),
+        reCapture(dependencies),
       ),
       plusOperator,
     )(state),
@@ -104,15 +104,15 @@ function reMany1 () {
   )
 }
 
-function reMany () {
+function reMany (dependencies) {
   return parser(
     'many',
     state => sequence(
       oneOf(
-        reChar(),
-        reRange(),
-        reGroup(),
-        reCapture(),
+        reChar(dependencies),
+        reRange(dependencies),
+        reGroup(dependencies),
+        reCapture(dependencies),
       ),
       timesOperator,
     )(state),
@@ -120,24 +120,27 @@ function reMany () {
   )
 }
 
-function reTimes () {
+function reTimes (dependencies) {
   return parser(
     'times',
-    state => sequence(
-      oneOf(
-        reChar(),
-        reRange(),
-        reCapture(),
-        reGroup(),
-      ),
-      bBraces(
-        sequence(
-          integer,
-          skip(comma),
-          integer
+    state => {
+      const pa = sequence(
+        oneOf(
+          reChar(dependencies),
+          reRange(dependencies),
+          reCapture(dependencies),
+          reGroup(dependencies),
+        ),
+        bBraces(
+          sequence(
+            integer,
+            skip(comma),
+            integer
+          )
         )
       )
-    )(state),
+      return pa(state)
+    },
     v => range(v[1][0], v[1][1])(v[0])
   )
 }
@@ -158,8 +161,8 @@ function reParser (dependencies) {
     'parser',
     state => lexeme(many(
       oneOf(
-        reCapture(dependencies),
         reAtom(dependencies),
+        reCapture(dependencies),
       )
     ))(state),
     v => v.length === 1 ? v[0] : sequence(...v)
@@ -225,21 +228,18 @@ function compile (name, source, ret, dependencies) {
   )
 }
 
-const url = `https?://(www.)?{{domain:[a-z0-9]+}}.{{extension:{extension}}}`
+const url = `{{protocol:https?}}://(www.)?{{domain:[a-z0-9]+}}.{{extension:{extension}}}`
 const extension = parser(
   'extension',
   oneOf(symbol('fr'), symbol('com'))
 )
 
-  /*
 const parse = compile(
   'url',
   url,
-  (_, { domain }) => ({ domain: domain.join('') }),
   { extension }
 )
-*/
 
-const state = createState({ input: '((vim+)|(vi))*' })
-const result = reParser({})(state)
+const state = createState({ input: 'a{1,2}' })
+const result = reTimes({})(state)
 console.log(result.value)
